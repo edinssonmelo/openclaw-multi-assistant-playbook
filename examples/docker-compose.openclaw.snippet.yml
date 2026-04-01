@@ -1,0 +1,72 @@
+# Fragmento de referencia — NO es un compose completo.
+# Ajusta DOMAIN, rutas bajo /srv, UID del contenedor, red externa y context del build del executor.
+#
+# OpenClaw Docker: https://docs.openclaw.ai/install/docker
+
+services:
+  openclaw_instance_a:
+    image: ghcr.io/openclaw/openclaw:latest
+    restart: unless-stopped
+    environment:
+      - OPENCLAW_GATEWAY_BIND=lan
+      - OPENCLAW_GATEWAY_PORT=18789
+    volumes:
+      - /srv/data/openclaw/instance-a:/home/node/.openclaw
+    networks:
+      - net_internal
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:18789/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.openclaw-a.rule=Host(`assistant-a.${DOMAIN}`)"
+      - "traefik.http.routers.openclaw-a.entrypoints=web"
+      - "traefik.http.services.openclaw-a.loadbalancer.server.port=18789"
+
+  openclaw_instance_b:
+    image: ghcr.io/openclaw/openclaw:latest
+    restart: unless-stopped
+    environment:
+      - OPENCLAW_GATEWAY_BIND=lan
+      - OPENCLAW_GATEWAY_PORT=18790
+    volumes:
+      - /srv/data/openclaw/instance-b:/home/node/.openclaw
+    networks:
+      - net_internal
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:18790/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.openclaw-b.rule=Host(`assistant-b.${DOMAIN}`)"
+      - "traefik.http.routers.openclaw-b.entrypoints=web"
+      - "traefik.http.services.openclaw-b.loadbalancer.server.port=18790"
+
+  agent_executor:
+    build:
+      context: ../agent-executor
+    restart: unless-stopped
+    environment:
+      - LLM_API_KEY=${LLM_API_KEY:-}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker:ro
+      - /srv/gitops/infra:/srv/gitops/infra:rw
+      - /srv/data/openclaw:/srv/data/openclaw:rw
+      # Opcional: montar venv de Aider del host en la MISMA ruta dentro del contenedor
+      # - /home/deploy/.venvs/aider:/home/deploy/.venvs/aider:ro
+    networks:
+      - net_internal
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/healthz', timeout=5).read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  net_internal:
+    external: true
