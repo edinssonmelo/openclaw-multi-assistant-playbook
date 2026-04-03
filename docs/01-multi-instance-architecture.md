@@ -1,46 +1,48 @@
-# Arquitectura: varias instancias aisladas
+# Architecture: Multiple Isolated Assistant Instances
 
-## Objetivo
+## Goal
 
-Varios asistentes (p. ej. uno por miembro del hogar o por contexto laboral/personal) con:
+Run multiple assistants, for example one per user, team, role, or workflow context, with:
 
-- **Memoria y sesiones separadas** (volúmenes distintos).
-- **Misma imagen** OpenClaw (o tag fijado), para operación homogénea.
-- **Canales** (Telegram, Web, etc.) configurados **por instancia** para no mezclar conversaciones.
+- **Separate memory and sessions** through distinct volumes.
+- The same **OpenClaw image** or pinned tag for predictable operations.
+- Per-instance **channels** such as Telegram or Web so conversations never mix.
 
-## Patrón de despliegue
+This is a practical pattern for a **multi-assistant architecture on a server using containers**.
+
+## Deployment pattern
 
 ```text
                     ┌─────────────────┐
-                    │  Reverse proxy  │  (Traefik, Caddy, nginx, …)
-                    │  TLS terminado  │  (a menudo delante: Cloudflare u otro CDN)
+                    │  Reverse proxy  │  (Traefik, Caddy, nginx, ...)
+                    │  TLS terminated │  (often behind Cloudflare or another CDN)
                     └────────┬────────┘
-                             │ HTTP interno
+                             │ Internal HTTP
          ┌───────────────────┼───────────────────┐
          ▼                   ▼                   ▼
-   openclaw:A          openclaw:B          n8n / otros
-   :18789               :18790              (misma red Docker)
+   openclaw:A          openclaw:B          n8n / other jobs
+   :18789               :18790             (same Docker network)
 ```
 
-Cada servicio `openclaw_*` expone un **puerto interno distinto** (p. ej. 18789, 18790, …). El proxy enruta por **hostname** (`assistant-a.example.com`, `assistant-b.example.com`).
+Each `openclaw_*` service exposes a different **internal port** such as 18789 or 18790. The reverse proxy routes by **hostname** such as `assistant-a.example.com` and `assistant-b.example.com`.
 
-## Datos en el host
+## Host-side data
 
-Convención típica (ajusta a tu layout):
+Typical convention:
 
 ```text
-/srv/data/openclaw/instance-a/   → montado en /home/node/.openclaw
-/srv/data/openclaw/instance-b/   → idem
+/srv/data/openclaw/instance-a/   -> mounted to /home/node/.openclaw
+/srv/data/openclaw/instance-b/   -> same pattern
 ```
 
-Dentro de cada uno: estado del gateway, workspace, credenciales de canales, base de memoria semántica, etc. **No compartir** un mismo volumen entre dos personas si quieres aislamiento fuerte.
+Each directory contains gateway state, workspace files, channel credentials, semantic memory data, and related instance-specific state. Do **not** share the same volume across users or assistant roles if strong isolation matters.
 
-## Red Docker
+## Docker networking
 
-Los gateways y el **Agent Executor** deben compartir una red **interna** (p. ej. `net_internal`) para que el DNS `http://agent_executor:8765` resuelva desde OpenClaw y desde n8n.
+The OpenClaw gateways and the **Agent Executor** should share an internal Docker network such as `net_internal` so names like `http://agent_executor:8765` resolve from OpenClaw and from workflow tools such as n8n.
 
-## Escalar a N instancias
+## Scaling to N instances
 
-1. Duplicar el bloque de servicio en Compose con nuevo puerto, volumen y regla `Host()`.
-2. Duplicar el workflow nocturno cambiando el identificador de instancia y el nombre del contenedor en los pasos que lean logs.
-3. Mantener **una** política de `agent_executor` compartida o por entorno; separar allowlists si el riesgo lo exige.
+1. Duplicate the Compose service block with a new port, volume, and `Host()` rule.
+2. Duplicate the nightly workflow and change the instance identifier and container name used in log-reading steps.
+3. Keep one shared `agent_executor` policy or split policies by environment when risk or compliance requires it.

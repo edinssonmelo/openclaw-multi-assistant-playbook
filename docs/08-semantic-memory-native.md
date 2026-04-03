@@ -1,19 +1,19 @@
-# Memoria semántica nativa (OpenClaw)
+# Native Semantic Memory in OpenClaw
 
-## Rol
+## Role
 
-Además de Markdown, OpenClaw puede mantener un **índice local** (p. ej. SQLite bajo `~/.openclaw/memory/`) con embeddings generados por un modelo GGUF descargado en el contenedor (p. ej. vía `node-llama-cpp`).
+In addition to Markdown files, OpenClaw can maintain a **local semantic memory index**, for example SQLite under `~/.openclaw/memory/`, with embeddings produced by a model running inside the container such as `node-llama-cpp` with a GGUF embedding model.
 
-## Comportamiento esperado
+## Expected behavior
 
-- Tras sesiones reales con contenido indexable, el recall mejora (“memory search”).
-- En una instancia **nueva** o recién creada, el índice puede mostrar **0 archivos / 0 chunks** hasta el primer bootstrap de embeddings.
+- After real sessions with indexable content, retrieval quality improves through memory search and recall.
+- In a **fresh instance**, the index may show **0 files / 0 chunks** until the first embedding bootstrap or indexing pass completes.
 
-## No sustituye
+## What it does not replace
 
-- El **nightly** y `MEMORY.md` siguen siendo la narrativa humana y auditable.
-- La memoria semántica es un **complemento** para recuperar fragmentos de conversaciones y documentos previos dentro de la instancia.
+- The **nightly memory loop** and `MEMORY.md` still provide the human-readable, auditable memory narrative.
+- Semantic memory is a **complement** for retrieving conversation fragments and prior documents inside the same assistant instance.
 
-## Operación
+## Operations
 
-Monitorea el estado con los comandos/diagnósticos que exponga tu versión de OpenClaw (`memory status`, UI de sistema, etc.). Si cambias de modelo de embeddings, puede requerir reindexación según upstream.
+Monitor semantic memory with whichever commands or diagnostics your OpenClaw version exposes, such as `memory status` or system UI panels. If you change embedding models, reindexing may be required depending on upstream behavior.

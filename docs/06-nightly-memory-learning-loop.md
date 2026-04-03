@@ -1,78 +1,80 @@
-# Bucle nocturno de memoria (“learning loop” ambiental)
+# Nightly Memory Loop for Operational Learning
 
-## Intención
+## Intent
 
-Cada noche (o en otro horario) el sistema **acumula contexto útil en archivos** sin depender de que el modelo “recuerde” entre sesiones en sus pesos. Es un **bucle de aprendizaje operativo**: el entorno guarda lo que importa; el agente **lee** esas capas en la siguiente conversación.
+Every night, or on another schedule, the system stores **useful context on disk** instead of pretending the model permanently remembers across sessions. This is an **operational learning loop** and a practical **self-learning strategy**: the environment preserves what matters, and the assistant reads those memory layers in the next conversation.
 
-## Señales de entrada (por instancia)
+In plain terms, this loop helps the product improve over time. The assistant can learn from recent work, recurring patterns, failures, and successful actions because those signals are summarized, saved, and reused.
 
-Orden sugerido:
+## Input signals per instance
 
-1. **Logs del contenedor** del gateway (últimas N líneas, truncar en el orquestador).
-2. **Memoria diaria** ya existente `workspace/memory/YYYY-MM-DD*.md` (opcional).
-3. **Extracto de `MEMORY.md`** (p. ej. primeras 80 líneas) para anclar hechos estables y reducir contradicciones.
+Suggested order:
 
-## Salidas
+1. **Gateway container logs** from the last N lines, trimmed in the orchestrator.
+2. Existing **daily memory** under `workspace/memory/YYYY-MM-DD*.md`, if present.
+3. A short **`MEMORY.md` excerpt**, for example the first 80 lines, to anchor stable facts and reduce contradictions.
 
-| Artefacto | Ubicación |
-|-----------|-----------|
-| Resumen nocturno | `workspace/memory/YYYY-MM-DD-nightly.md` |
-| Puntero reciente | `workspace/memory/latest.md` (symlink o copia) |
+## Outputs
 
-### Formato recomendado del nightly
+| Artifact | Location |
+|----------|----------|
+| Nightly summary | `workspace/memory/YYYY-MM-DD-nightly.md` |
+| Recent pointer | `workspace/memory/latest.md` as a symlink or copy |
+
+### Recommended nightly format
 
 ```markdown
-# Nightly memory — YYYY-MM-DD — <instance-id>
+# Nightly memory - YYYY-MM-DD - <instance-id>
 
-## Hechos nuevos
+## New facts
 - ...
 
-## Patrones (qué funcionó / qué no)
+## Patterns (what worked / what did not)
 - ...
 
-## Pendientes (sin resolver)
+## Open items
 - ...
 
-## Resumen (3 líneas)
+## Summary (3 lines)
 1. ...
 2. ...
 3. ...
 
-## Promoción a MEMORY.md (solo candidatos)
+## Promotion to MEMORY.md (candidates only)
 - [ ] ...
 ```
 
-## Pipeline canónico (n8n u otro)
+## Canonical pipeline
 
 ```text
-Schedule (ej. 02:00)
-  → fetch logs (Executor allowlist: docker logs)
-  → (opcional) fetch nightly-context unificado
-  → POST al modelo (vía proxy en Executor con API key en env del contenedor)
-  → POST /write-memory { instance, filename, content, update_latest_symlink }
-  → (opcional) POST /promote-memory con candidatos filtrados
+Schedule (for example 02:00)
+  -> fetch logs (Executor allowlist: docker logs)
+  -> optional unified nightly-context fetch
+  -> call the model through an Executor proxy with API keys in container env
+  -> POST /write-memory { instance, filename, content, update_latest_symlink }
+  -> optional POST /promote-memory with filtered candidates
 ```
 
-## Invariantes
+## Invariants
 
-- Si **no** hay nota diaria, el prompt debe permitir secciones vacías o “N/A” y **no inventar** avances del día.
-- Etiquetar en el prompt los bloques de contexto: `[nota-diaria]`, `[memoria-larga]`, `[noche-anterior]`, `[logs-sistema]`.
-- `latest.md` no debe crear retroalimentación circular con el nightly del **mismo** día (evita que el modelo se cite a sí mismo sin nueva evidencia).
+- If there is **no** daily note, the prompt should allow empty sections or `N/A` and must **not invent** progress.
+- Label context blocks clearly in the prompt, for example `[daily-note]`, `[long-term-memory]`, `[previous-nightly]`, and `[system-logs]`.
+- `latest.md` should not create circular feedback with the nightly file from the **same** day unless new evidence exists.
 
-## Credenciales
+## Credentials
 
-Mantén claves de proveedor LLM en el **entorno del Executor** o en secretos del orquestador; no las incrustes en workflows exportados a Git.
+Keep LLM provider keys in the **Executor environment** or in orchestrator secrets. Do not hardcode them in workflow exports committed to Git.
 
-## Idempotencia
+## Idempotency
 
-Re-ejecución la misma noche: sobrescribir el mismo `YYYY-MM-DD-nightly.md` o usar sufijo `-attempt2` según tu política; documenta la elección en el workflow.
+If the workflow runs more than once on the same night, either overwrite the same `YYYY-MM-DD-nightly.md` file or use a suffix such as `-attempt2`. Document that policy in the workflow.
 
-## Diagrama
+## Diagram
 
 ```text
 Cron
-  → Executor: lectura logs / contexto
-  → Modelo: síntesis Markdown
-  → Executor: write-memory
-  → (opcional) promote-memory
+  -> Executor: read logs / collect context
+  -> Model: generate Markdown summary
+  -> Executor: write-memory
+  -> optional promote-memory
 ```

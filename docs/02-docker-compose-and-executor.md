@@ -1,47 +1,47 @@
-# Docker Compose, volúmenes y Agent Executor
+# Docker Compose, Volumes, and Agent Executor
 
-## Servicios mínimos
+## Minimum services
 
-1. **Un contenedor OpenClaw por instancia** (`image: ghcr.io/openclaw/openclaw` o la que uses).
-2. **Un servicio `agent_executor` (nombre DNS estable)** construido desde tu propio `Dockerfile` o imagen privada: expone HTTP (p. ej. `:8765`) y ejecuta comandos en el host según política.
+1. **One OpenClaw container per assistant instance** using `ghcr.io/openclaw/openclaw` or the image you maintain.
+2. **One `agent_executor` service** with a stable DNS name, built from your own `Dockerfile` or private image, exposing HTTP such as `:8765` and executing host commands according to policy.
 
-## Variables de entorno del gateway
+## Gateway environment variables
 
-- `OPENCLAW_GATEWAY_BIND=lan` — necesario si un **reverse proxy** en otra caja contenedor habla con el gateway; `loopback` suele romper Traefik/Caddy.
-- `OPENCLAW_GATEWAY_PORT` — único **por instancia**.
+- `OPENCLAW_GATEWAY_BIND=lan` - required when a **reverse proxy** in another container connects to the gateway. `loopback` often breaks Traefik or Caddy.
+- `OPENCLAW_GATEWAY_PORT` - must be unique **per instance**.
 
-## Volúmenes típicos del gateway
+## Typical gateway volume mounts
 
-| Montaje host → contenedor | Propósito |
-|---------------------------|-----------|
-| `/srv/data/openclaw/<id>:/home/node/.openclaw` | Estado completo del gateway |
-| Opcional: credenciales MCP (`~/.google-mcp` u otro) | Persistir OAuth de herramientas que usen `npx` |
-| Opcional: sitio estático `public-site` | Si usas publicación estática integrada |
+| Host mount -> container | Purpose |
+|-------------------------|---------|
+| `/srv/data/openclaw/<id>:/home/node/.openclaw` | Full gateway state |
+| Optional MCP credentials such as `~/.google-mcp` | Persist OAuth for tools launched with `npx` or similar |
+| Optional `public-site` static content | Use only if you enable integrated static publishing |
 
-## Agent Executor: montajes habituales
+## Common Agent Executor mounts
 
-| Montaje | Propósito |
-|---------|-----------|
-| `/var/run/docker.sock` | `docker logs`, `docker exec` controlados por allowlist |
-| Repo de infra en el host (`/srv/gitops/...`) | `git status`, edición asistida con Aider |
-| **Todo el árbol** `/srv/data/openclaw` | Permitir `POST /write-memory` que escriba bajo `.../workspace/memory/` por instancia |
-| Venv de Aider en el host | Misma ruta dentro del contenedor si el venv usa shebangs absolutos del host |
+| Mount | Purpose |
+|-------|---------|
+| `/var/run/docker.sock` | Controlled `docker logs` and `docker exec` through an allowlist |
+| Infrastructure repo on the host such as `/srv/gitops/...` | `git status`, guided edits, or Aider workflows |
+| The full `/srv/data/openclaw` tree | Allow `POST /write-memory` to write into `.../workspace/memory/` per instance |
+| Aider virtual environment on the host | Reuse the same path inside the container if the venv has absolute shebangs |
 
-**Compatibilidad Python:** si el venv del host apunta a `/usr/bin/python3` y la imagen del executor no coincide, añade un symlink o reconstruye el venv dentro de una ruta compatible.
+**Python compatibility:** if the host virtual environment points to `/usr/bin/python3` and the executor image does not match, add a compatible symlink or rebuild the venv under a path available inside the container.
 
-## Endpoints útiles del Executor (patrón de referencia)
+## Useful Executor endpoints
 
-Nombres ilustrativos; tu código puede variar:
+Illustrative names only; your implementation can differ:
 
-- `POST /execute` — cuerpo JSON con instrucción shell; modo `auto` vs confirmación según política.
-- `GET /healthz` — humo.
-- `POST /write-memory` — escribe Markdown bajo `workspace/memory/` de **una** instancia declarada en el JSON (`instance: a|b`).
-- `POST /nightly-context` — agrega en una sola llamada: fragmento de memoria diaria, cabecera de `MEMORY.md`, logs recortados.
-- `POST /deepseek-chat` (u otro proveedor) — proxy HTTP para que n8n no gestione cabeceras de auth frágiles en nodos Code.
-- `POST /promote-memory` — promoción conservadora de candidatos a `MEMORY.md`.
+- `POST /execute` - accepts shell instructions in JSON, often with an `auto` versus confirmation mode.
+- `GET /healthz` - smoke check.
+- `POST /write-memory` - writes Markdown into `workspace/memory/` for exactly one declared instance.
+- `POST /nightly-context` - returns daily memory snippets, a `MEMORY.md` header, and trimmed logs in one call.
+- `POST /deepseek-chat` or another provider-specific proxy - lets n8n avoid fragile auth header handling in code nodes.
+- `POST /promote-memory` - performs conservative candidate promotion into `MEMORY.md`.
 
-Define **allowlist** estricta de prefijos (`docker logs`, `docker exec <nombre permitido>`, `cat /srv/...`) y bloquea tuberías peligrosas.
+Use a strict **allowlist of command prefixes** such as `docker logs`, `docker exec <approved-name>`, and `cat /srv/...`. Block dangerous piping patterns and unrestricted shell access.
 
-## Ejemplo genérico
+## Example
 
-Ver [examples/docker-compose.openclaw.snippet.yml](../examples/docker-compose.openclaw.snippet.yml).
+See [examples/docker-compose.openclaw.snippet.yml](../examples/docker-compose.openclaw.snippet.yml).

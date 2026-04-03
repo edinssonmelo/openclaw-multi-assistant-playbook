@@ -1,49 +1,66 @@
-# OpenClaw multi-assistant playbook
+# OpenClaw Multi-Assistant Playbook
 
-Documentación **genérica y redactada para publicar**: arquitectura, estrategia y mejoras para ejecutar **varias instancias aisladas** de [OpenClaw](https://docs.openclaw.ai) (o compatible) con **memoria en disco**, un **puente agéntico** hacia el host (Agent Executor), y un **bucle nocturno de “aprendizaje”** vía orquestación externa (p. ej. n8n) — sin pretender que el modelo aprenda en los pesos entre sesiones.
+Publish-ready documentation for building a **self-hosted multi-assistant architecture** with [OpenClaw](https://docs.openclaw.ai) or a compatible stack. This repository documents how to run **multiple isolated AI assistants** on a server with **containers**, **disk-backed memory**, an **agent executor bridge** to the host, and a clear **self-improving architecture** based on heartbeat, nightly memory synthesis, and long-term memory curation, without claiming model weight updates across sessions.
 
-> **Aviso:** esto es un playbook de patrones probados en un homelab; adapta rutas, nombres de red Docker y políticas de seguridad a tu entorno. No hay garantías; revisa el upstream OpenClaw para tu versión.
+This playbook is intentionally generic so it can be reused for **containerized LLM agents**, **multi-agent server deployments**, **Docker Compose AI assistant setups**, **persistent memory orchestration**, and **self-learning AI system** patterns that improve agent behavior over time through files, retrieval, and automation.
 
-## Qué encontrarás aquí
+> **Note:** this is a field-tested homelab and self-hosting playbook, not an official OpenClaw reference. Adapt paths, Docker network names, proxy rules, and security policies to your environment. Always validate against the upstream OpenClaw documentation for your version.
 
-| Área | Documento |
-|------|-------------|
-| Términos y capas de memoria | [docs/00-glossary.md](docs/00-glossary.md) |
-| Varias instancias, aislamiento, puertos | [docs/01-multi-instance-architecture.md](docs/01-multi-instance-architecture.md) |
-| Compose, volúmenes, `agent_executor`, redes | [docs/02-docker-compose-and-executor.md](docs/02-docker-compose-and-executor.md) |
-| Traefik / proxy, `bind: lan`, health | [docs/03-ingress-and-gateway-binding.md](docs/03-ingress-and-gateway-binding.md) |
-| Workspace: `SOUL`, `USER`, `MEMORY`, `AGENTS`, sync entre instancias | [docs/04-workspace-files-and-sync.md](docs/04-workspace-files-and-sync.md) |
-| Sandbox del gateway vs host; modo autónomo; prioridades | [docs/05-agent-behavior-and-executor.md](docs/05-agent-behavior-and-executor.md) |
-| Bucle nocturno: logs + síntesis + `write-memory` + promoción | [docs/06-nightly-memory-learning-loop.md](docs/06-nightly-memory-learning-loop.md) |
-| Cuándo subir hechos a `MEMORY.md` | [docs/07-memory-promotion.md](docs/07-memory-promotion.md) |
-| Memoria semántica nativa (SQLite + embeddings locales) | [docs/08-semantic-memory-native.md](docs/08-semantic-memory-native.md) |
-| Endurecimiento: allowlist, rate limit, proxies de confianza | [docs/09-security-hardening.md](docs/09-security-hardening.md) |
-| Checklist de humo, memoria, conversación, agencia | [docs/10-evaluation-checklist.md](docs/10-evaluation-checklist.md) |
-| Live trace, Telegram streaming, transparencia operativa | [docs/11-live-trace-and-transparency.md](docs/11-live-trace-and-transparency.md) |
-| Filosofía: “aprendizaje” = estado en disco + política | [docs/12-philosophy-learning-without-weight-updates.md](docs/12-philosophy-learning-without-weight-updates.md) |
+## What this repo covers
 
-**Plantillas listas para adaptar:**
+| Area | Document |
+|------|----------|
+| Terms and memory layers | [docs/00-glossary.md](docs/00-glossary.md) |
+| Multi-instance isolation, ports, and topology | [docs/01-multi-instance-architecture.md](docs/01-multi-instance-architecture.md) |
+| Docker Compose, volumes, `agent_executor`, and networks | [docs/02-docker-compose-and-executor.md](docs/02-docker-compose-and-executor.md) |
+| Traefik or reverse proxy ingress, `bind: lan`, and health checks | [docs/03-ingress-and-gateway-binding.md](docs/03-ingress-and-gateway-binding.md) |
+| Workspace files: `SOUL`, `USER`, `MEMORY`, `AGENTS`, and cross-instance sync | [docs/04-workspace-files-and-sync.md](docs/04-workspace-files-and-sync.md) |
+| Gateway sandbox vs host access, autonomous mode, and execution rules | [docs/05-agent-behavior-and-executor.md](docs/05-agent-behavior-and-executor.md) |
+| Nightly memory loop: logs, summarization, `write-memory`, and promotion | [docs/06-nightly-memory-learning-loop.md](docs/06-nightly-memory-learning-loop.md) |
+| When to promote facts into `MEMORY.md` | [docs/07-memory-promotion.md](docs/07-memory-promotion.md) |
+| Native semantic memory with SQLite and local embeddings | [docs/08-semantic-memory-native.md](docs/08-semantic-memory-native.md) |
+| Security hardening: allowlists, rate limits, trusted proxies | [docs/09-security-hardening.md](docs/09-security-hardening.md) |
+| Validation checklist for infra, memory, conversation quality, and agent behavior | [docs/10-evaluation-checklist.md](docs/10-evaluation-checklist.md) |
+| Live trace, streaming updates, and operational transparency | [docs/11-live-trace-and-transparency.md](docs/11-live-trace-and-transparency.md) |
+| Philosophy: operational learning without model retraining | [docs/12-philosophy-learning-without-weight-updates.md](docs/12-philosophy-learning-without-weight-updates.md) |
+
+## Templates
 
 - [templates/SHARED_AGENTS_APPENDIX.template.md](templates/SHARED_AGENTS_APPENDIX.template.md)
 - [templates/operatorModePrompt.template.md](templates/operatorModePrompt.template.md)
 
-**Ejemplo genérico de fragmento Compose:** [examples/docker-compose.openclaw.snippet.yml](examples/docker-compose.openclaw.snippet.yml)
+## Example
 
-## Idea central en una frase
+Generic Docker Compose snippet:
+[examples/docker-compose.openclaw.snippet.yml](examples/docker-compose.openclaw.snippet.yml)
 
-**Varios asistentes** = varios **volúmenes** y **gateways** (o perfiles equivalentes), más **un ejecutor con allowlist** en la misma red Docker que hable con el host, más **archivos Markdown curados** y un **job nocturno** que condensa señales (logs, memoria diaria) en notas estructuradas y, opcionalmente, promueve a memoria larga.
+## Core idea in one sentence
 
-## Cómo usar este repo
+Run **multiple AI assistants** as **isolated containerized instances**, each with its own volume and gateway, connect them to a constrained **Agent Executor** on the same Docker network, and use curated Markdown plus a **nightly memory workflow** to create durable, auditable operational memory.
 
-1. Lee [docs/00-glossary.md](docs/00-glossary.md) y [docs/12-philosophy-learning-without-weight-updates.md](docs/12-philosophy-learning-without-weight-updates.md).
-2. Ajusta [examples/docker-compose.openclaw.snippet.yml](examples/docker-compose.openclaw.snippet.yml) a tu dominio, UID/GID y rutas bajo `/srv` o equivalente.
-3. Copia las plantillas de `templates/` al **workspace** de cada instancia y personaliza identidad solo en archivos por instancia (`SOUL.md`, `USER.md`, …).
-4. Implementa el bucle nocturno según [docs/06-nightly-memory-learning-loop.md](docs/06-nightly-memory-learning-loop.md) con tu orquestador favorito.
+## Self-learning strategy
 
-## Publicar solo esta carpeta
+This repository also documents a simple **self-learning architecture** for AI assistants. The system improves over time by collecting interaction signals, keeping lightweight heartbeat-style operational traces, summarizing the day into nightly memory, promoting stable facts into long-term memory, and reloading those memory layers in later sessions. In other words, the product gets better through **persistent state, retrieval, and policy**, not through hidden retraining.
 
-Ver [PUBLISHING.md](PUBLISHING.md).
+## Why this is useful
 
-## Licencia
+- Supports **multi-assistant server architecture** without mixing sessions or memory across roles.
+- Keeps **persistent memory** on disk instead of pretending the model permanently learns between chats.
+- Describes a practical **self-improving AI assistant architecture** that uses heartbeat, nightly processing, and memory promotion to improve future behavior.
+- Makes the system **auditable**, because behavior is grounded in files, prompts, logs, and explicit policies.
+- Works well for **self-hosted AI assistant infrastructure** using Docker, reverse proxies, and workflow automation.
 
-[LICENSE](LICENSE) — MIT.
+## How to use this repo
+
+1. Start with [docs/00-glossary.md](docs/00-glossary.md) and [docs/12-philosophy-learning-without-weight-updates.md](docs/12-philosophy-learning-without-weight-updates.md).
+2. Adapt [examples/docker-compose.openclaw.snippet.yml](examples/docker-compose.openclaw.snippet.yml) to your domain, UID/GID, and server paths under `/srv` or an equivalent layout.
+3. Copy the templates from `templates/` into the workspace of each assistant instance and customize only the per-instance identity files such as `SOUL.md`, `USER.md`, and `MEMORY.md`.
+4. Implement the nightly memory workflow described in [docs/06-nightly-memory-learning-loop.md](docs/06-nightly-memory-learning-loop.md) using n8n or another orchestrator.
+
+## Publishing this folder by itself
+
+See [PUBLISHING.md](PUBLISHING.md).
+
+## License
+
+[LICENSE](LICENSE) - MIT.

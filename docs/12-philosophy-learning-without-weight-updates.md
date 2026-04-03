@@ -1,25 +1,27 @@
-# Filosofía: “aprendizaje” sin actualizar pesos
+# Philosophy: Learning Without Weight Updates
 
-## Qué **no** hace este stack
+## What this stack does **not** do
 
-El modelo de lenguaje **no** retiene entre sesiones en sus parámetros. Cada conversación se alimenta de **contexto enviado** y de **archivos/índices** que tú controlas.
+The language model does **not** retain knowledge across sessions in its parameters. Every conversation depends on **supplied context** plus the **files and indexes** you control.
 
-## Qué **sí** hace (learning loop ambiental)
+## What it does do
 
-1. **Durante el día:** notas en `memory/YYYY-MM-DD.md`, uso de memoria semántica nativa, herramientas que escriben archivos permitidos.
-2. **Por la noche:** un job externo condensa **señales** (logs, extractos de memoria larga) en un **nightly** estructurado.
-3. **Con curadoría:** candidatos del nightly pasan filtros y suben a `MEMORY.md` o quedan archivados.
-4. **En la siguiente sesión:** el agente lee `latest.md`, `MEMORY.md`, hooks y reglas compartidas — la “identidad operativa” es **estado en disco + política de lectura**.
+1. **During the day:** write notes into `memory/YYYY-MM-DD.md`, use native semantic memory, and let approved tools write structured files.
+2. **At night:** run an external job that condenses signals such as logs, heartbeat traces, and long-term memory excerpts into a structured **nightly memory** file.
+3. **With curation:** filter candidates from the nightly file and either promote them into `MEMORY.md` or archive them.
+4. **In the next session:** load `latest.md`, `MEMORY.md`, hooks, and shared rules so the assistant's operational identity is driven by **disk state plus reading policy**.
 
-## Por qué importa
+This is why the stack can be described as **self-improving** or **self-learning** in an operational sense. The assistant does not retrain itself, but the product still gets better because each cycle captures evidence, compresses it into useful memory, and makes that memory available to future sessions.
 
-- **Auditable:** puedes leer Git o el volumen y ver qué “sabe” el sistema.
-- **Reversible:** borrar o editar Markdown corrige errores; no hay que “desentrenar”.
-- **Multi-asistente:** cada volumen acumula su propia historia sin contaminar al otro.
+## Why this matters
 
-## Límites honestos
+- **Auditable:** you can inspect Git or the mounted volume and see what the system "knows."
+- **Reversible:** editing or deleting Markdown corrects mistakes without any need to "untrain" a model.
+- **Multi-assistant friendly:** each volume accumulates its own history without contaminating another assistant instance.
 
-- Más texto ≠ mejor: sin promoción y sin síntesis, el contexto se llena de ruido.
-- El Executor es poderoso: la seguridad es **allowlist + revisión humana**, no confianza ciega en el modelo.
+## Honest limits
 
-Este playbook describe **cómo orquestar** esas capas; la calidad final depende de tus prompts, del modelo elegido y de cuánto curas `MEMORY.md`.
+- More text does not automatically improve outcomes. Without promotion and summarization, context becomes noisy.
+- The Agent Executor is powerful. Security comes from **allowlists plus human review**, not blind trust in the model.
+
+This playbook explains **how to orchestrate** those layers. Final quality still depends on prompt design, model selection, retrieval quality, and how carefully you curate `MEMORY.md`.

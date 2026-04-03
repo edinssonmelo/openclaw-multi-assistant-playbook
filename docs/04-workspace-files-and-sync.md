@@ -1,38 +1,38 @@
-# Workspace: archivos y estrategia de sync
+# Workspace Files and Sync Strategy
 
-## Archivos clave (por instancia)
+## Key files per instance
 
-| Archivo / carpeta | Rol |
-|-------------------|-----|
-| `SOUL.md` | Tono, límites, identidad pública del asistente |
-| `USER.md` | Perfil del humano para quien trabaja esta instancia |
-| `MEMORY.md` | Hechos estables (curados) |
-| `AGENTS.md` | Instrucciones operativas largas |
-| `workspace/memory/*.md` | Notas diarias, nightly, experimentación |
-| `workspace/skills/` | Skills locales (si aplica) |
+| File / folder | Role |
+|---------------|------|
+| `SOUL.md` | Tone, boundaries, and public assistant identity |
+| `USER.md` | Profile of the user or operator for that instance |
+| `MEMORY.md` | Stable curated facts |
+| `AGENTS.md` | Long-form operational instructions |
+| `workspace/memory/*.md` | Daily notes, nightly memory, experiments |
+| `workspace/skills/` | Local skills if used in the deployment |
 
-Algunos despliegues usan también `IDENTITY.md`, `TOOLS.md`, etc.; sincroniza con la versión OpenClaw que uses.
+Some deployments also use `IDENTITY.md`, `TOOLS.md`, or similar files. Align the set of workspace files with the OpenClaw version you run.
 
-## Qué compartir entre instancias
+## What to share across instances
 
-**Sí (idéntico en todas):**
+**Yes, keep identical across all instances:**
 
-- Reglas de **capacidades agénticas** comunes (cómo usar el Executor, transparencia operativa, sandbox vs host).
-- Políticas de **seguridad** y estilo (brevedad, asertividad).
+- Shared **agent capability rules**, such as how to use the Agent Executor, how to explain sandbox versus host access, and how to report operational progress.
+- Shared **security and style policies**, such as brevity, assertiveness, and escalation rules.
 
-**No (nunca copiar entre personas sin revisión):**
+**No, do not copy across users or roles without review:**
 
-- `USER.md`, `MEMORY.md`, contenido íntimo en `SOUL.md`.
-- Tokens, allowlists de Telegram/WhatsApp con IDs reales (mejor por `.env` o config en volumen).
+- `USER.md`, `MEMORY.md`, and any sensitive identity content in `SOUL.md`.
+- Tokens, chat allowlists, or real account identifiers. Store those in `.env` files or volume-local configuration instead.
 
-## Patrón “repo Git + script de sync”
+## Recommended pattern: Git repo plus sync script
 
-1. Versiona en Git los Markdown **compartidos** (plantillas + apéndice).
-2. En el servidor, un script copia solo esos archivos a **cada** `.../openclaw/<id>/workspace/`.
-3. El script **no** sobrescribe `USER.md`, `MEMORY.md`, `SOUL.md` salvo flag explícito.
+1. Version only the **shared Markdown artifacts** in Git, such as templates and a shared capability appendix.
+2. On the server, use a script to copy only those files into each `.../openclaw/<id>/workspace/`.
+3. Make sure the script does **not** overwrite `USER.md`, `MEMORY.md`, or `SOUL.md` unless an explicit flag enables that behavior.
 
-Así evitas “drift” donde una instancia tiene reglas antiguas y otra actualizadas.
+This reduces configuration drift across assistant instances while preserving isolation.
 
-## File Browser / carpetas públicas
+## File browser or public docs
 
-Si expones documentación en una ruta tipo `docs.example.com`, **no** asumas que es el workspace del agente. El workspace operativo sigue siendo el del volumen OpenClaw. Si quieres reflejar contenido, hazlo con un script de copia explícito.
+If you expose documentation through a path such as `docs.example.com`, do **not** assume that it is the assistant's live workspace. The operational workspace still lives in the OpenClaw volume. If you want public or mirrored content, use an explicit sync or copy step.

@@ -1,45 +1,45 @@
-# Comportamiento agéntico: sandbox, Executor y modo autónomo
+# Agent Behavior: Sandbox, Executor, and Autonomous Mode
 
-## Dos mundos
+## Two worlds
 
-El LLM en OpenClaw **cree** que puede conocer el servidor; sin herramientas hacia el host, **no** puede. Documenta esto en los prompts:
+An LLM inside OpenClaw may appear to "know" the server, but without tools that reach the host it **does not**. Make that explicit in prompts and system instructions:
 
-| Contexto | Qué puede hacer |
-|----------|------------------|
-| Sandbox del contenedor OpenClaw | Leer/escribir workspace, skills, llamar MCP configurados **dentro** del sandbox |
-| Host real, Docker, git del repo de infra | Solo vía **Agent Executor** (o SSH explícito aprobado por ti) |
+| Context | What it can do |
+|---------|----------------|
+| OpenClaw container sandbox | Read and write the workspace, load skills, and call MCP tools configured **inside** the sandbox |
+| Real host, Docker, or infrastructure git repo | Access only through the **Agent Executor** or an explicitly approved SSH path |
 
-## Patrón de llamada
+## Execution pattern
 
 ```text
-OpenClaw (LLM) → herramienta HTTP → Agent Executor → shell/docker en el host
+OpenClaw (LLM) -> HTTP tool -> Agent Executor -> shell/docker on the host
 ```
 
-El JSON típico incluye `instruction` y `mode` (`auto` vs interactivo). La allowlist del Executor decide qué se ejecuta sin preguntar.
+The JSON request usually contains `instruction` and `mode`, such as `auto` or interactive. The Executor allowlist determines what runs without extra confirmation.
 
-## Modo autónomo (menos fricción, mismo techo de seguridad)
+## Autonomous mode
 
-**Sin menú** para pasos obvios de solo lectura cuando el usuario pidió validar o diagnosticar:
+Reduce friction for obvious low-risk read-only tasks:
 
-- Encadenar 2–4 comandos seguros: `git status`, `docker ps`, versión de herramientas, healthchecks.
-- **Sí pedir confirmación** antes de: `rm -rf`, `git reset --hard`, tocar bases de datos, secretos, DNS, túneles.
+- Chain 2 to 4 safe diagnostic commands such as `git status`, `docker ps`, tool versions, or health checks.
+- Require explicit confirmation before destructive actions such as `rm -rf`, `git reset --hard`, database changes, secret handling, DNS edits, or tunnel reconfiguration.
 
-## Prioridad antes de actuar
+## Priority before acting
 
-1. ¿Aporta al objetivo del usuario?
-2. ¿Hace falta dato real del sistema?
-3. ¿Es ruido o “show-off” de herramientas?
+1. Does this help the user's goal?
+2. Is real system data required?
+3. Is the action actually useful, or just tool theater?
 
-## Prohibiciones útiles en prompts
+## Useful prompt prohibitions
 
-- No afirmar estado del host sin ejecución real.
-- No mezclar temas no relacionados en un mismo mensaje si el usuario no los mezcló.
-- No informes largos sin utilidad inmediata.
+- Do not claim host state without a real execution result.
+- Do not mix unrelated topics in the same reply unless the user did.
+- Do not produce long reports with no immediate value.
 
-## Aider (opcional)
+## Aider integration
 
-Para cambios multi-archivo en el repo de infra, puedes enrutar al Executor con el binario Aider y `cwd` en el clon del repo. La clave del proveedor LLM suele inyectarse por variable de entorno del Compose del Executor.
+For multi-file infrastructure changes, route through the Executor to an Aider binary with `cwd` set to the infrastructure repository. Provider API keys usually enter through environment variables on the Executor service.
 
-## Texto listo para pegar
+## Ready-to-adapt text
 
-Usa y adapta [templates/operatorModePrompt.template.md](../templates/operatorModePrompt.template.md) y el apéndice compartido en [templates/SHARED_AGENTS_APPENDIX.template.md](../templates/SHARED_AGENTS_APPENDIX.template.md).
+Use and customize [templates/operatorModePrompt.template.md](../templates/operatorModePrompt.template.md) and [templates/SHARED_AGENTS_APPENDIX.template.md](../templates/SHARED_AGENTS_APPENDIX.template.md).

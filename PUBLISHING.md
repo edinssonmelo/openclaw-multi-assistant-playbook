@@ -1,14 +1,14 @@
-# Publicar este playbook en su propio repositorio
+# Publishing This Playbook as Its Own Repository
 
-Esta carpeta está pensada para **copiarse o versionarse sola** como repositorio público, sin el resto de tu infraestructura privada.
+This folder is designed to be copied or versioned as a **standalone public repository** without exposing the rest of a private infrastructure stack.
 
-## Opción A — Subcarpeta de un monorepo (ahora)
+## Option A - Keep it inside a monorepo
 
-Si el playbook vive dentro de un repo más grande, los lectores pueden clonar solo la carpeta con [git sparse-checkout](https://git-scm.com/docs/git-sparse-checkout) o copiar el directorio manualmente.
+If this playbook lives inside a larger repository, readers can clone only this folder with [git sparse-checkout](https://git-scm.com/docs/git-sparse-checkout) or copy the directory manually.
 
-## Opción B — Repositorio nuevo (recomendado para compartir)
+## Option B - Publish it as a new repository
 
-En tu máquina:
+On your machine:
 
 ```bash
 cd openclaw-multi-assistant-playbook
@@ -17,16 +17,16 @@ git add .
 git commit -m "docs: initial OpenClaw multi-assistant playbook"
 ```
 
-Crea el repo vacío en GitHub/GitLab y enlázalo:
+Create an empty repository on GitHub or GitLab and connect it:
 
 ```bash
-git remote add origin https://github.com/<tu-usuario>/<nombre-repo>.git
+git remote add origin https://github.com/<your-user>/<repo-name>.git
 git branch -M main
 git push -u origin main
 ```
 
-## Antes de hacer público
+## Before making it public
 
-- Revisa que no hayas añadido notas personales en `docs/` ni en `templates/`.
-- No subas `.env`, claves, dominios reales de producción ni capturas con datos sensibles.
-- Opcional: añade `CODE_OF_CONDUCT.md` y plantilla de issues según tu comunidad.
+- Check that `docs/` and `templates/` do not contain personal notes or environment-specific secrets.
+- Do not publish `.env` files, API keys, SSH keys, production domains, chat IDs, or screenshots with sensitive data.
+- Optionally add `CODE_OF_CONDUCT.md`, issue templates, or contribution guidelines if you want broader community reuse.

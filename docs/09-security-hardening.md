@@ -1,31 +1,31 @@
-# Endurecimiento de seguridad
+# Security Hardening
 
-## Gateway OpenClaw
+## OpenClaw gateway
 
-Patrones recomendados (nombres de clave según tu `openclaw.json`):
+Recommended patterns, with key names adjusted to your `openclaw.json` schema:
 
-- **`tools.exec.security: allowlist`** — solo comandos/patrones explícitos.
-- **`tools.exec.ask: on-miss`** — pedir confirmación si la herramienta no está en lista.
-- **No usar wildcards** en `tools.elevated.allowFrom.*` tipo `["*"]`; restringe a chats/usuarios conocidos.
-- **`gateway.auth.rateLimit`** — mitigar abuso.
-- **`gateway.trustedProxies`** — si hay Traefik/Caddy delante, configura proxies de confianza para IP real y rate limit correcto.
+- **`tools.exec.security: allowlist`** - allow only explicit commands or patterns.
+- **`tools.exec.ask: on-miss`** - request confirmation when a tool call falls outside the list.
+- Do **not** use broad wildcards such as `["*"]` in `tools.elevated.allowFrom.*`; restrict access to known chats or users.
+- **`gateway.auth.rateLimit`** - reduce abuse and accidental overload.
+- **`gateway.trustedProxies`** - if Traefik or Caddy sits in front, configure trusted proxies so real client IPs and rate limits remain accurate.
 
 ## Agent Executor
 
-- Allowlist de **prefijos** de shell, no “shell libre”.
-- Bloquear tuberías peligrosas y `rm -rf` en modo automático.
-- Montar solo los paths necesarios del host; el socket Docker es **muy sensible**.
+- Use an allowlist of **shell prefixes**, not free-form shell access.
+- Block dangerous pipes and destructive commands in automatic mode.
+- Mount only the host paths the Executor actually needs. The Docker socket is **high sensitivity**.
 
-## n8n y proxies
+## n8n and reverse proxies
 
-Si n8n está detrás de reverse proxy, fija `N8N_PROXY_HOPS` (u equivalente) para que `X-Forwarded-For` sea confiable y desaparezcan warnings; revisa la documentación de tu versión.
+If n8n runs behind a reverse proxy, set `N8N_PROXY_HOPS` or the equivalent option for your version so forwarded IPs are trusted correctly and warning noise disappears.
 
-## Secretos
+## Secrets
 
-- API keys en `.env` del host referenciado por Compose; **no** en Markdown del workspace.
-- Workflows exportados a Git sin credenciales incrustadas; usa credenciales de n8n o env del Executor.
+- Keep API keys in host `.env` files referenced by Compose, or in orchestrator secrets, **not** in Markdown inside the assistant workspace.
+- Export workflows to Git without embedded credentials. Use n8n credentials or Executor environment variables instead.
 
-## Superficie de mensajería
+## Messaging surface
 
-- Allowlists por canal (Telegram user IDs, números de WhatsApp, etc.).
-- Pairing explícito donde el producto lo requiera.
+- Keep channel-specific allowlists for Telegram user IDs, WhatsApp numbers, or equivalent identifiers.
+- Require explicit pairing or enrollment when the product workflow needs it.

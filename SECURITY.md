@@ -1,10 +1,10 @@
-# Seguridad
+# Security
 
-Este playbook **no** debe contener:
+This playbook should **not** contain:
 
-- Contraseñas, tokens API, claves SSH.
-- Identificadores personales reales (teléfonos, user IDs de Telegram, dominios de producción) salvo que estés redactando un informe responsable coordinado con los afectados.
+- Passwords, API tokens, or SSH keys.
+- Real personal identifiers such as phone numbers, chat user IDs, or production domains, unless disclosure is part of a coordinated responsible process.
 
-Si encuentras material sensible en un fork, elimínalo y rota las credenciales expuestas.
+If you find sensitive material in a fork or derivative copy, remove it and rotate any exposed credentials immediately.
 
-Para vulnerabilidades en **OpenClaw upstream**, sigue el proceso del proyecto oficial.
+For vulnerabilities in **OpenClaw upstream**, follow the official project disclosure process.

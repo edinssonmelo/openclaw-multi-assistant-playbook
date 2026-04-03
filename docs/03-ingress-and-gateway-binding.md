@@ -1,28 +1,28 @@
-# Ingress, Traefik y binding del gateway
+# Ingress, Traefik, and Gateway Binding
 
-## Problema frecuente
+## Common problem
 
-OpenClaw queda escuchando solo en `127.0.0.1` dentro del contenedor. El **reverse proxy** en otro contenedor no puede conectar.
+OpenClaw may listen only on `127.0.0.1` inside the container. A **reverse proxy** running in another container cannot connect to it.
 
-**Solución:** configurar el gateway para escuchar en todas las interfaces del contenedor (`lan` o `0.0.0.0` según documentación de tu versión) y asegurar `OPENCLAW_GATEWAY_BIND=lan` (o equivalente).
+**Fix:** configure the gateway to listen on all container interfaces, typically `lan` or `0.0.0.0` depending on your version, and set `OPENCLAW_GATEWAY_BIND=lan` or the equivalent setting.
 
-## Traefik (Docker provider)
+## Traefik with the Docker provider
 
-Etiquetas típicas:
+Typical labels:
 
 - `traefik.enable=true`
-- Regla `Host(\`assistant-a.${DOMAIN}\`)`
-- `entrypoints=web` si TLS lo termina Cloudflare u otro túnel y llega HTTP interno
-- `loadbalancer.server.port=<puerto interno del gateway>`
+- `Host(\`assistant-a.${DOMAIN}\`)`
+- `entrypoints=web` if TLS is already terminated by Cloudflare or another tunnel and Traefik receives internal HTTP
+- `loadbalancer.server.port=<gateway-internal-port>`
 
-## Origen de confianza (`allowedOrigins`)
+## Trusted origins (`allowedOrigins`)
 
-Si usas Control UI u otra SPA, configura los orígenes permitidos para WebSocket/API detrás de tu dominio público.
+If you use a Control UI or another SPA, configure allowed origins correctly for WebSocket and API traffic behind your public domain.
 
-## Healthchecks
+## Health checks
 
-Usa el endpoint HTTP del gateway (`/healthz` o el que exponga tu build) en el `healthcheck` de Compose para que el proxy no enrute a contenedores aún no listos.
+Use the gateway HTTP endpoint such as `/healthz`, or the equivalent exposed by your build, in the Compose `healthcheck` so the reverse proxy does not route traffic to containers that are not ready yet.
 
-## Túnel (Cloudflare, etc.)
+## Tunnel setup
 
-Patrón común: túnel → `http://traefik:80` en la red Docker. Cada hostname público debe existir en el panel del túnel y coincidir con la regla `Host()` de Traefik.
+A common pattern is: tunnel -> `http://traefik:80` on the Docker network. Every public hostname must exist in the tunnel configuration and match the Traefik `Host()` rule.

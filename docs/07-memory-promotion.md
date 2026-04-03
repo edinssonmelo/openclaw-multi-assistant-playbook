@@ -1,34 +1,34 @@
-# Promoción a `MEMORY.md`
+# Promoting Facts into `MEMORY.md`
 
-## Capas (resumen)
+## Layers at a glance
 
-| Capa | Vida útil | Contenido típico |
-|------|-----------|------------------|
-| Cruda / diaria | Días | `memory/YYYY-MM-DD.md` |
-| Nightly | Archivo permanente hasta archivo | `memory/YYYY-MM-DD-nightly.md` |
-| Puntero | Siempre actualizado | `memory/latest.md` |
-| Largo plazo | Meses | `MEMORY.md` |
+| Layer | Lifespan | Typical content |
+|-------|----------|-----------------|
+| Raw / daily | Days | `memory/YYYY-MM-DD.md` |
+| Nightly | Persistent until archived | `memory/YYYY-MM-DD-nightly.md` |
+| Pointer | Continuously updated | `memory/latest.md` |
+| Long-term | Months | `MEMORY.md` |
 
-## Reglas: qué promover
+## Promotion rules
 
-Promover a `MEMORY.md` solo si cumple al menos una condición:
+Promote a fact into `MEMORY.md` only if at least one of these conditions is true:
 
-1. **Repetición:** el hecho aparece en dos noches distintas y sigue siendo cierto.
-2. **Decisión explícita** del humano (“recuérdalo siempre”).
-3. **Alto impacto** en cómo debe actuar el asistente.
-4. **Estabilidad:** no es un plan efímero del día.
+1. **Repetition:** the fact appears on two different nights and still holds.
+2. **Explicit instruction:** a human operator says it should always be remembered.
+3. **High impact:** it materially changes how the assistant should behave.
+4. **Stability:** it is not just a short-lived plan or temporary note.
 
-**No promover:** secretos, datos personales sensibles que deban ir a un gestor, ruido, contradicciones sin resolver, duplicados literales.
+Do **not** promote secrets, sensitive personal data that belongs in a secrets manager, noise, unresolved contradictions, or literal duplicates.
 
-## Flujo humano + automático
+## Human plus automation flow
 
-- El nightly puede incluir una sección **“Promoción a MEMORY.md (candidatos)”** con checkboxes.
-- Un paso automatizado (`/promote-memory`) puede deduplicar y filtrar; el humano revisa cambios conflictivos.
+- The nightly file can include a section called **"Promotion to MEMORY.md (candidates only)"** with checkboxes.
+- An automated step such as `/promote-memory` can deduplicate and filter candidates, while a human reviews conflicts.
 
-## Aislamiento entre instancias
+## Isolation across instances
 
-Cada volumen tiene su propio `MEMORY.md`. Un hecho “global” (p. ej. política de casa) puede vivir en documentación de infra en Git, no hace falta duplicarlo en todos los `MEMORY.md` salvo que cada asistente deba conocerlo en charla.
+Every volume keeps its own `MEMORY.md`. A global rule or infrastructure-wide policy can live in shared documentation tracked in Git instead of being duplicated into every long-term memory file.
 
-## Relación con “consciencia”
+## Relation to "awareness"
 
-El modelo no aprende pesos entre sesiones. La **consciencia operativa** es: archivos en disco + hooks + política de qué leer al iniciar sesión. Más texto mal curado empeora el asistente; la promoción es un **filtro de calidad**.
+The model does not update its weights between sessions. **Operational awareness** comes from files on disk plus hooks and policies that control what the assistant reads at session start. More uncurated text usually makes the assistant worse, not better, so promotion should act as a **quality filter**.
